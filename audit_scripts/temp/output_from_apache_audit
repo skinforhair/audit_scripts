@@ -1,10 +1,10 @@
 :'arrakis':
 
 
-bash: line 0: cd: /home/jeremiahj/audit/audit_scripts/generated_scripts: No such file or directory
+bash: line 0: cd: /home/jeremiahj/audit/audit_scripts: No such file or directory
 arrakis
 IPADDR=172.16.23.46
-Wed Feb 18 12:16:54 MST 2015
+Wed Feb 18 13:14:30 MST 2015
 CentOS release 6.5 (Final)
 2.6.32-431.17.1.el6.x86_64
 Linux #1 SMP Wed May 7 23:32:49 UTC 2014 x86_64
@@ -19,10 +19,10 @@ BREAKME
 :'geidiprime':
 
 
-bash: line 0: cd: /home/jeremiahj/audit/audit_scripts/generated_scripts: No such file or directory
+bash: line 0: cd: /home/jeremiahj/audit/audit_scripts: No such file or directory
 geidiprime
 IPADDR=172.16.23.48
-Wed Feb 18 12:16:54 MST 2015
+Wed Feb 18 13:14:30 MST 2015
 CentOS release 6.5 (Final)
 2.6.32-431.17.1.el6.x86_64
 Linux #1 SMP Wed May 7 23:32:49 UTC 2014 x86_64
@@ -37,10 +37,10 @@ BREAKME
 :'caladan':
 
 
-bash: line 0: cd: /home/jeremiahj/audit/audit_scripts/generated_scripts: No such file or directory
+bash: line 0: cd: /home/jeremiahj/audit/audit_scripts: No such file or directory
 caladan
 IPADDR=172.16.23.47
-Wed Feb 18 12:16:55 MST 2015
+Wed Feb 18 13:14:30 MST 2015
 CentOS release 6.5 (Final)
 2.6.32-431.17.1.el6.x86_64
 Linux #1 SMP Wed May 7 23:32:49 UTC 2014 x86_64
@@ -55,10 +55,10 @@ BREAKME
 :'kaitain':
 
 
-bash: line 0: cd: /home/jeremiahj/audit/audit_scripts/generated_scripts: No such file or directory
+bash: line 0: cd: /home/jeremiahj/audit/audit_scripts: No such file or directory
 kaitain
 IPADDR=172.16.23.49
-Wed Feb 18 12:16:55 MST 2015
+Wed Feb 18 13:14:30 MST 2015
 CentOS release 6.5 (Final)
 2.6.32-431.17.1.el6.x86_64
 Linux #1 SMP Wed May 7 23:32:49 UTC 2014 x86_64
