@@ -154,7 +154,7 @@ sed -i 's|,|</td><td class="main">|g' $OUTPUT_PHP$ENVIRONMENT.php
 ##### CREATE VARIABLES CONTAINING TABLE START INFORMATION #####
 ###############################################################
 
-TABLE1='<table class="t_main" border="1">'
+TABLE1='<br><table class="t_main" border="1">'
 COLSPAN1='<tr><th class="main" colspan="13">APACHE '$ENVIRONMENT' Server Information</th></tr>'
 
 printf '%s\n' H 1i "$TABLE1" . wq | ed -s $OUTPUT_PHP$ENVIRONMENT.php
@@ -321,7 +321,7 @@ sed -i 's|,|</td><td class="main">|g' $OUTPUT_PHP$ENVIRONMENT.php
 ##### CREATE VARIABLES CONTAINING TABLE START INFORMATION #####
 ###############################################################
 
-TABLE1='<table class="t_main" border="1">'
+TABLE1='<br><table class="t_main" border="1">'
 COLSPAN1='<tr><th class="main" colspan="14">WEBLOGIC '$ENVIRONMENT' Server Information</th></tr>'
 
 printf '%s\n' H 1i "$TABLE1" . wq | ed -s $OUTPUT_PHP$ENVIRONMENT.php
@@ -467,7 +467,7 @@ sed -i 's|,|</td><td class="main">|g' $OUTPUT_PHP$ENVIRONMENT.php
 ##### CREATE VARIABLES CONTAINING TABLE START INFORMATION #####
 ###############################################################
 
-TABLE1='<table border="1">'
+TABLE1='<br><table border="1">'
 COLSPAN1='<tr><th class="main" colspan="13">Tomcat '$ENVIRONMENT' Server Information</th></tr>'
 
 printf '%s\n' H 1i "$TABLE1" . wq | ed -s $OUTPUT_PHP$ENVIRONMENT.php

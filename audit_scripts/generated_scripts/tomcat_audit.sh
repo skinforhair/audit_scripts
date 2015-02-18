@@ -23,9 +23,11 @@ do
 				;;
         	"Testutltc")	serverList=("${TestutltcTomcatArray[@]}")
 				;;
-        	"ProdDMZ32")	serverList=("${ProdDMZ32TomcatArray[@]}")
+        	"Prodmstrat")	serverList=("${ProdmstratTomcatArray[@]}")
 				;;
-        	"ProdInternal")	serverList=("${ProdInternalTomcatArray[@]}")
+        	"Prodshrtc")	serverList=("${ProdshrtcTomcatArray[@]}")
+				;;
+        	"Produtltc")	serverList=("${ProdutltcTomcatArray[@]}")
 				;;
         	"ProdDMZ64")	serverList=("${ProdDMZ64TomcatArray[@]}")
 				;;

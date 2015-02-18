@@ -14,7 +14,9 @@
    {
 	if (is_dir($pathName))
 	{ 
-		echo $pathName."<br>";
+		$title=substr($pathName,15);
+		$title=ucfirst($title);
+		echo "<h1>".$title."</h1>";
 ?>
  <table border=1>
   <tr><th>DEV</th><th>TEST</th><th>PROD</th></tr>
