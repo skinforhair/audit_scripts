@@ -1,0 +1,9 @@
+audit_scripts/generated_scripts/*
+audit_scripts/temp/*
+html/generated_menu/*
+html/apache
+html/tomcat
+html/weblogic
+html/korea
+html/china
+html/japan
