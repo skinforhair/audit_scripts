@@ -1,0 +1,92 @@
+html *
+        {
+                font-size: 95%;
+                font-family: Courier New;
+        }
+table.t_main
+        {
+                border:solid #999;
+                border-collapse:collapse;
+        }
+table.p_main
+        {
+                border:solid #999;
+                border-collapse:collapse;
+        }
+table.t_menu
+        {
+                border: 1px solid black;
+                border-collapse:collapse;
+                background:#BFBFBF;
+        }
+th.p_main
+         {
+                font-family: arial;
+                font-size: 200%;
+                color:#FFC7AF;
+                background:#800000;
+         }
+th.main
+        {
+                font-family: arial;
+                font-size: 200%;
+                color:#9ef4fa;
+                background:#0000ff;
+        }
+th.second
+        {
+                font-family: arial;
+                font-size: 90%;
+                color:#9ef4fa;
+                background:#0000ff;
+        }
+th.third
+        {
+                font-family: arial;
+                font-size: 90%;
+                color:#FFC7AF;
+                background:#800000;
+        }
+td.main
+        {
+                text-align:center;
+                background:#ffc;
+                        font-family: Courier New;
+                        font-size: 90%;
+                border: 1px solid black;
+        }
+td.menu
+        {
+                text-align:center;
+                background:#C8C8C8;
+                        font-family: Courier New;
+                        font-size: 90%;
+                border: 1px solid black;
+        }
+td.menuFirst
+        {
+                text-align:center;
+                color:#FFFFFF;
+                background:#000000;
+                        font-family: Lucida Console;
+                        font-size: 100%;
+                border: 1px solid Black;
+         }
+td.tableHead
+         {
+            text-align:center;
+            color:#FFFFFF;
+            background:#000000;
+                    font-family: Lucida Console;
+                    font-size: 100%;
+            border: 1px solid Black;
+          }
+
+h1 {
+    border-bottom: 8px solid #57c4d0;
+    position: absolute; /* As I've said, adding this allowed me to do so, but the result was far from ideal! */
+}
+
+.title {
+    border-bottom: 1px solid #dedede;
+}

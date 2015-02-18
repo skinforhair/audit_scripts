@@ -1,0 +1,14 @@
+#!/bin/bash
+#change root_path based on where scripts are located
+ROOT_PATH=/home/jeremiahj/audit
+
+
+SCRIPTS=$ROOT_PATH/audit_scripts
+HTMLDIR=$ROOT_PATH/html
+TEMPDIR=$SCRIPTS/temp
+CONFDIR=$ROOT_PATH/conf
+GeneratedScripts=$SCRIPTS/generated_scripts
+HTMLMenu=$HTMLDIR/generated_menu
+
+#source $SCRIPTS/common/config_variables/*
+

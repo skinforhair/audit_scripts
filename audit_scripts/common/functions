@@ -1,0 +1,533 @@
+function audit_apache() {
+$SCRIPTS/common/rem -s \'$1\' '"
+
+##### NODE NAME  - Col 1 #######
+uname -n;
+
+##### IP ADDRESS - Col 2 #######
+cat /etc/sysconfig/network-scripts/ifcfg-eth0 | grep IPADDR
+
+#### TIME OF REPORT  - Col 3 ###
+date;
+
+##### OS RELEASE INFORMATION ####
+cat /etc/redhat-release; 
+
+##### KERNEL INFORMATION ########
+uname -r;
+
+##### MACHINE INFORMATION #######
+uname -isv; 
+
+##### PROCESSOR INFORMATION #####
+##### Columns 7 and 8 ###########
+cat /proc/cpuinfo | grep processor | wc -l;
+cat /proc/cpuinfo | grep name | sort -u;
+
+##### MEMORY INFORMATION ########
+##### Column 9 and 10    ########
+cat /proc/meminfo | grep MemTotal;
+cat /proc/meminfo | grep SwapTotal;
+
+##### APACHE INFORMATION ########
+##### Column 11 and 12   ########
+/opt/apache/httpd/bin/apachectl -version | grep version;
+/opt/apache/httpd/bin/apachectl -version | grep built;
+
+##### OPEN SSL INFORMATION #####
+openssl version;
+
+##################################################
+##### PLACE HOLDER FOR A LINE BREAK ##############
+##################################################
+echo BREAKME;
+
+"' >> $OUTPUT
+} #audit_apache
+
+
+function createPHPMenu() {
+
+ myType=`echo "$1" | awk -F"/" '{print $NF}'`
+ myType=${myType:0:$((${#myType}-1))}
+ myDir=$HTMLMenu/$myType
+ if [ -d "$myDir" ]; then
+	 echo "<input type=\"checkbox\" name=\"$2\" value=\"$1$2.php\" />$2<br />" > $myDir/$2.php
+ else
+	 mkdir $myDir
+	 echo "<input type=\"checkbox\" name=\"$2\" value=\"$1$2.php\" />$2<br />" > $myDir/$2.php
+ fi
+
+# $OUTPUT_PHP $ENVIRONMENT
+} #end createPHPMenu
+
+function format_apache() {
+OUTPUT2=$TEMPDIR/output_apache_csv_2
+OUTPUT3=$TEMPDIR/output_apache_csv_3
+#Remmove Unwanted Lines
+sed  "/:'/d" $OUTPUT > $OUTPUT2
+sed -i '/No such file or directory/d' $OUTPUT2
+sed -i '/#IPADDR/d' $OUTPUT2
+
+#Remove Blank lines
+sed -i '/^$/d' $OUTPUT2
+
+#Remove unwanted tabs
+sed -i 's/[\t]//g' $OUTPUT2
+
+#Remove More unwanted strings
+sed -i 's/model name:        //g' $OUTPUT2
+sed -i 's/model name: //g' $OUTPUT2
+sed -i 's/MemTotal:      //g' $OUTPUT2
+sed -i 's/SwapTotal:     //g' $OUTPUT2
+sed -i 's/64, compiled/64- compiled/g' $OUTPUT2
+sed -i 's/"//g' $OUTPUT2
+sed -i 's/IPADDR=//g' $OUTPUT2
+sed -i 's/<//g' $OUTPUT2
+sed -i 's/>//g' $OUTPUT2
+sed -i 's|Server version: Apache/||g' $OUTPUT2
+sed -i 's/Server built:   //g' $OUTPUT2
+
+#Change Carriage Returns to Commas
+sed -e :a -e '$!N;s/\n/,/;ta' $OUTPUT2 > $OUTPUT3
+
+#Remove Double Commas
+sed -i 's/,,//g' $OUTPUT3
+
+#Remove Comma from beginning and end of line
+sed -i 's/^,\(.*\),$/\1/' $OUTPUT3
+
+#Add Column Headings
+LINE1='NODE NAME,IP ADDRESS,REPORT DATE,OS VERSION,KERNEL,MACHINE INFORMATION,NUMBER OF CPUS,CPU MODEL,MEM TOTAL,SWAP TOTAL,APACHE VERSION,BUILD DATE,OPENSSL VERSION'
+printf '%s\n' H 1i "$LINE1" . wq | ed -s $OUTPUT3
+
+#output to CSV
+mv $OUTPUT3 $CSV_FILE
+
+#Cleanup
+rm $OUTPUT2
+
+} ##format_apache
+
+function apache_csv_to_php() {
+        INPUT_CSV="$1"
+        ENVIRONMENT="$2"
+
+  if [ "$ENVIRONMENT" == "" ]; then
+        ENVIRONMENT="Dev"
+  fi
+        cp $INPUT_CSV $OUTPUT_PHP$ENVIRONMENT.php
+#########################################
+##### CREATE HTML TABLE HEADING ROW #####
+#########################################
+
+sed -i 's|NODE NAME,|<tr><th class="second">NODE NAME</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|IP ADDRESS,|\n<th class="second">IP ADDRESS</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|REPORT DATE,|\n<th class="second">REPORT DATE</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|OS VERSION,|\n<th class="second">OS VERSION</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|MACHINE INFORMATION,|\n<th class="second">MACHINE INFORMATION</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|KERNEL,|\n<th class="second">KERNEL</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|NUMBER OF CPUS,|\n<th class="second">NUMBER OF CPUS</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|CPU MODEL,|\n<th class="second">CPU MODEL</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|MEM TOTAL,|\n<th class="second">MEM TOTAL</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|SWAP TOTAL,|\n<th class="second">SWAP TOTAL</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|APACHE VERSION,|\n<th class="second">APACHE VERSION</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|BUILD DATE,|\n<th class="second">BUILD DATE</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|OPENSSL VERSION|\n<th class="second">OPEN SSL</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+
+############################################
+##### ADD ALL <tr><td> TAGS FOR TABLE ######
+############################################
+
+for i in ${FullApacheFarmArray[@]}
+do
+#  echo "---- working on $i -----"
+  sed -i "s/\b$i/\n<tr><td class='main'>$i/g" $OUTPUT_PHP$ENVIRONMENT.php
+done
+
+sed -i 's|,BREAKME,|</td></tr>\n|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|,BREAKME|</td></tr>\n|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|,|</td><td class="main">|g' $OUTPUT_PHP$ENVIRONMENT.php
+
+
+###############################################################
+##### CREATE VARIABLES CONTAINING TABLE START INFORMATION #####
+###############################################################
+
+TABLE1='<table class="t_main" border="1">'
+COLSPAN1='<tr><th class="main" colspan="13">APACHE '$ENVIRONMENT' Server Information</th></tr>'
+
+printf '%s\n' H 1i "$TABLE1" . wq | ed -s $OUTPUT_PHP$ENVIRONMENT.php
+printf '%s\n' H 2i "$COLSPAN1" . wq | ed -s $OUTPUT_PHP$ENVIRONMENT.php
+
+################################
+##### CLOSE THE TABLE HTML #####
+################################
+
+echo '</table>' >> $OUTPUT_PHP$ENVIRONMENT.php
+
+###############################
+#### Write a php file for menus
+###############################
+ createPHPMenu $OUTPUT_PHP $ENVIRONMENT
+
+
+} #end apache_csv_to_php
+
+function cleanup_files() {
+	args=("$@")
+
+	for i in ${args[@]}; do
+		if [ -a $i ]; then
+			rm $i
+		fi
+	done
+} #end cleanup_files
+
+function audit_weblogic() {
+
+$SCRIPTS/common/rem -s \'$1\' '"
+
+##### NODE NAME ################
+uname -n;
+
+##### IP ADDRESS #####
+cat /etc/sysconfig/network-scripts/ifcfg-eth0 | grep IPADDR
+
+##### TIME OF REPORT ############
+date;
+
+##### OS RELEASE INFORMATION ####
+cat /etc/redhat-release; 
+
+##### KERNEL INFORMATION ########                                                                             
+uname -r;
+
+##### MACHINE INFORMATION #######
+uname -isv; 
+
+##### PROCESSOR INFORMATION #####
+cat /proc/cpuinfo | grep processor | wc -l;
+cat /proc/cpuinfo | grep name | sort -u;
+
+##### MEMORY INFORMATION ########
+cat /proc/meminfo | grep MemTotal;
+cat /proc/meminfo | grep SwapTotal;
+
+##### WEBLOGIC INFORMATION ########
+cat /opt/weblogic/registry.xml | grep Server | grep version;
+/opt/jdk/jrrt/bin/java -version;
+
+##### PLACE HOLDER FOR A LINE BREAK ##############
+echo BREAKME;
+"' >> $OUTPUT
+
+} #audit_weblogic
+
+function format_weblogic() {
+OUTPUT2=$TEMPDIR/output_weblogic_csv_2
+OUTPUT3=$TEMPDIR/output_weblogic_csv_3
+
+#Remmove Unwanted Lines
+sed  "/:'/d" $OUTPUT > $OUTPUT2
+sed -i '/No such file or directory/d' $OUTPUT2
+sed -i '/#IPADDR/d' $OUTPUT2
+
+#Remove Blank lines
+sed -i '/^$/d' $OUTPUT2
+
+#Remove unwanted tabs
+sed -i 's/[\t]//g' $OUTPUT2
+
+#Remove More unwanted strings
+sed -i 's/model name:        //g' $OUTPUT2
+sed -i 's/model name: //g' $OUTPUT2
+sed -i 's/MemTotal:      //g' $OUTPUT2
+sed -i 's/SwapTotal:     //g' $OUTPUT2
+sed -i 's/64, compiled/64- compiled/g' $OUTPUT2
+sed -i 's/component name="WebLogic Server" version="//g' $OUTPUT2
+sed -i 's|" InstallDir="/opt/weblogic/wlserver_10.3"||g' $OUTPUT2
+sed -i 's/java version//g' $OUTPUT2
+sed -i 's/"//g' $OUTPUT2
+sed -i 's/IPADDR=//g' $OUTPUT2
+sed -i 's/<//g' $OUTPUT2
+sed -i 's/>//g' $OUTPUT2
+
+#Change Carriage Returns to Commas
+sed -e :a -e '$!N;s/\n/,/;ta' $OUTPUT2 > $OUTPUT3
+#cat $OUTPUT2 > $OUTPUT3
+
+#Remove Double Commas
+sed -i 's/,,//g' $OUTPUT3
+
+#Remove Comma from beginning and end of line
+sed -i 's/^,\(.*\),$/\1/' $OUTPUT3
+
+#Add Column Headings
+LINE1='NODE NAME,IP ADDRESS,REPORT DATE,OS VERSION,KERNEL,MACHINE INFORMATION,NUMBER OF CPUS,CPU MODEL,MEM TOTAL,SWAP TOTAL,WEBLOGIC VERSION,JAVA VERSION,JVM INFORMATION,JVM TYPE'
+printf '%s\n' H 1i "$LINE1" . wq | ed -s $OUTPUT3
+
+#output to CSV
+mv $OUTPUT3 $CSV_FILE
+
+#Cleanup
+rm $OUTPUT2
+} ##format_weblogic
+
+function weblogic_csv_to_php() {
+        INPUT_CSV="$1"
+        ENVIRONMENT="$2"
+
+  if [ "$ENVIRONMENT" == "" ]; then
+        ENVIRONMENT="Dev"
+  fi
+        cp $INPUT_CSV $OUTPUT_PHP$ENVIRONMENT.php
+#########################################
+##### CREATE HTML TABLE HEADING ROW #####
+#########################################
+
+sed -i 's|NODE NAME,|<tr><th class="second">NODE NAME</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|IP ADDRESS,|\n<th class="second">IP ADDRESS</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|REPORT DATE,|\n<th class="second">REPORT DATE</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|OS VERSION,|\n<th class="second">OS VERSION</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|MACHINE INFORMATION,|\n<th class="second">MACHINE INFORMATION</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|KERNEL,|\n<th class="second">KERNEL</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|NUMBER OF CPUS,|\n<th class="second">NUMBER OF CPUS</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|CPU MODEL,|\n<th class="second">CPU MODEL</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|MEM TOTAL,|\n<th class="second">MEM TOTAL</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|SWAP TOTAL,|\n<th class="second">SWAP TOTAL</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|WEBLOGIC VERSION,|\n<th class="second">WEBLOGIC VERSION</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|JAVA VERSION,|\n<th class="second">JAVA VERSION</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|JVM INFORMATION,|\n<th class="second">JVM INFORMATION</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|JVM TYPE|\n<th class="second">JVM TYPE</th></tr>|g' $OUTPUT_PHP$ENVIRONMENT.php
+
+
+############################################
+##### ADD ALL <tr><td> TAGS FOR TABLE ######
+############################################
+
+for i in ${FullWeblogicFarmArray[@]}
+do
+#  echo "---- working on $i -----"
+  sed -i "s/\b$i/\n<tr><td class='main'>$i/g" $OUTPUT_PHP$ENVIRONMENT.php
+done
+
+sed -i 's|,BREAKME,|</td></tr>\n|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|,BREAKME|</td></tr>\n|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|,|</td><td class="main">|g' $OUTPUT_PHP$ENVIRONMENT.php
+
+
+###############################################################
+##### CREATE VARIABLES CONTAINING TABLE START INFORMATION #####
+###############################################################
+
+TABLE1='<table class="t_main" border="1">'
+COLSPAN1='<tr><th class="main" colspan="14">WEBLOGIC '$ENVIRONMENT' Server Information</th></tr>'
+
+printf '%s\n' H 1i "$TABLE1" . wq | ed -s $OUTPUT_PHP$ENVIRONMENT.php
+printf '%s\n' H 2i "$COLSPAN1" . wq | ed -s $OUTPUT_PHP$ENVIRONMENT.php
+
+################################
+##### CLOSE THE TABLE HTML #####
+################################
+
+echo '</table>' >> $OUTPUT_PHP$ENVIRONMENT.php
+
+###############################
+#### Write a php file for menus
+###############################
+ createPHPMenu $OUTPUT_PHP $ENVIRONMENT
+
+} #end weblogic_csv_to_php
+
+function audit_tomcat() {
+$SCRIPTS/common/rem -s \'$1\' '"
+##### NODE NAME ################
+uname -n;
+
+##### IP ADDRESS #####
+cat /etc/sysconfig/network-scripts/ifcfg-eth0 | grep IPADDR
+
+##### TIME OF REPORT ############
+date;
+
+##### OS RELEASE INFORMATION ####
+cat /etc/redhat-release; 
+
+##### MACHINE INFORMATION #######
+uname -isv; 
+
+##### PROCESSOR INFORMATION #####
+cat /proc/cpuinfo | grep processor | wc -l;
+cat /proc/cpuinfo | grep name | sort -u;
+
+##### MEMORY INFORMATION ########
+cat /proc/meminfo | grep MemTotal;
+cat /proc/meminfo | grep SwapTotal;
+
+##### TOMCAT INFORMATION ########
+/opt/tomcat/bin/version.sh | grep Server | grep number
+/opt/tomcat/bin/version.sh | grep JVM | grep Version
+/opt/tomcat/bin/version.sh | grep JVM | grep Vendor
+
+##### PLACE HOLDER FOR A LINE BREAK ##############
+echo BREAKME;
+
+"' >> $OUTPUT
+
+} #end audit_tomcat
+
+function format_tomcat() {
+
+OUTPUT2=$TEMPDIR/output_tomcat_csv_2
+OUTPUT3=$TEMPDIR/output_tomcat_csv_3
+#Remmove Unwanted Lines
+sed  "/:'/d" $OUTPUT > $OUTPUT2
+sed -i '/No such file or directory/d' $OUTPUT2
+sed -i '/#IPADDR/d' $OUTPUT2
+
+##### REMOVE UNWANTED TABS #####
+sed -i 's/[\t]//g' $OUTPUT2
+
+##### REMOVE MORE UNWANTED STRINGS #####
+sed -i 's/model name:        //g' $OUTPUT2
+sed -i 's/model name: //g' $OUTPUT2
+sed -i 's/MemTotal:      //g' $OUTPUT2
+sed -i 's/SwapTotal:     //g' $OUTPUT2
+sed -i 's/64, compiled/64- compiled/g' $OUTPUT2
+sed -i 's/component name="WebLogic Server" version="//g' $OUTPUT2
+sed -i 's|" InstallDir="/opt/tomcat/wlserver_10.3"||g' $OUTPUT2
+sed -i 's/JVM Version:    //g' $OUTPUT2
+sed -i 's/JVM Vendor:     //g' $OUTPUT2
+sed -i 's/"//g' $OUTPUT2
+sed -i 's/IPADDR=//g' $OUTPUT2
+sed -i 's/Server number:  //g' $OUTPUT2
+
+##### CHANGE CARRIAGE RETURNS TO COMMAS #####
+sed -e :a -e '$!N;s/\n/,/;ta' $OUTPUT2 > $OUTPUT3
+
+##### REMOVE DOUBLE COMMAS #####
+sed -i 's/,,//g' $OUTPUT3
+
+##### REMOVE COMMA AT THE END OF THE LINE #####
+sed -i 's/Oracle Corporation,/Oracle Corporation/g' $OUTPUT3
+
+##### ADD COLUMN HEADINGS FOR COMMA DELIMITED FILE #####
+LINE1='NODE NAME,IP ADDRESS,REPORT DATE,OS VERSION,MACHINE INFORMATION,NUMBER OF CPUS,CPU MODEL,MEM TOTAL,SWAP TOTAL,TOMCAT VERSION,JVM VERSION,JVM VENDOR'
+printf '%s\n' H 1i "$LINE1" . wq | ed -s $OUTPUT3
+
+
+#output to CSV
+mv $OUTPUT3 $CSV_FILE
+
+#cleanup
+rm $OUTPUT2
+} #end format_tomcat
+
+function tomcat_csv_to_php() {
+        INPUT_CSV="$1"
+        ENVIRONMENT="$2"
+
+  if [ "$ENVIRONMENT" == "" ]; then
+        ENVIRONMENT="Dev"
+  fi
+        cp $INPUT_CSV $OUTPUT_PHP$ENVIRONMENT.php
+#########################################
+##### CREATE HTML TABLE HEADING ROW #####
+#########################################
+
+sed -i 's|NODE NAME,|<tr><th class="second">NODE NAME</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|IP ADDRESS,|\n<th class="second">IP ADDRESS</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|REPORT DATE,|\n<th class="second">REPORT DATE</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|OS VERSION,|\n<th class="second">OS VERSION</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|MACHINE INFORMATION,|\n<th class="second">MACHINE INFORMATION</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+#sed -i 's|KERNEL,|\n<th class="second">KERNEL</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|NUMBER OF CPUS,|\n<th class="second">NUMBER OF CPUS</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|CPU MODEL,|\n<th class="second">CPU MODEL</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|MEM TOTAL,|\n<th class="second">MEM TOTAL</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|SWAP TOTAL,|\n<th class="second">SWAP TOTAL</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|TOMCAT VERSION,|\n<th class="second">TOMCAT VERSION</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|JVM VERSION,|\n<th class="second">JVM VERSION</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|JVM VENDOR|\n<th class="second">JVM VENDOR</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+
+
+############################################
+##### ADD ALL <tr><td> TAGS FOR TABLE ######
+############################################
+for i in ${FullTomcatFarmArray[@]}
+do
+	sed -i "s/\b$i/\n<tr><td class='main'>$i/g" $OUTPUT_PHP$ENVIRONMENT.php
+done
+
+sed -i 's|,BREAKME,|</td></tr>\n|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|,BREAKME|</td></tr>\n|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|,|</td><td class="main">|g' $OUTPUT_PHP$ENVIRONMENT.php
+
+###############################################################
+##### CREATE VARIABLES CONTAINING TABLE START INFORMATION #####
+###############################################################
+
+TABLE1='<table border="1">'
+COLSPAN1='<tr><th class="main" colspan="13">Tomcat '$ENVIRONMENT' Server Information</th></tr>'
+
+printf '%s\n' H 1i "$TABLE1" . wq | ed -s $OUTPUT_PHP$ENVIRONMENT.php
+printf '%s\n' H 2i "$COLSPAN1" . wq | ed -s $OUTPUT_PHP$ENVIRONMENT.php
+
+################################
+##### CLOSE THE TABLE HTML #####
+################################
+
+echo '</table>' >> $OUTPUT_PHP$ENVIRONMENT.php
+
+###############################
+#### Write a php file for menus
+###############################
+ createPHPMenu $OUTPUT_PHP $ENVIRONMENT
+
+} #end tomcat_csv_to_php
+
+function cleanGenPath() {
+ path="$HTMLMenu/$1"
+ if [ -d "$path" ]; then
+	rm $path/*.php
+ fi
+} #end cleanGenPath
+
+function generateCheckBoxes() {
+	path="$HTMLMenu/$1/*"
+	output=$HTMLMenu/$1_"list.php"
+	exlen=${#1}
+	#account for before and after slashes
+	exlen=$((exlen+2))
+
+	if [ -a $output ]; then
+	 rm $output
+	fi
+	echo "<?php" >> $output
+
+for i in $path; do
+  #remove leading path
+  filename=${i:${#HTMLMenu}}
+  #remove subdirectory path
+  filename=${filename:$exlen}
+  #remove file extension
+  filename=${filename:0:$((${#filename}-4))}
+ echo "$"$filename" = $""_POST[\""$filename"\"];" >> $output
+done
+
+for i in $path; do
+  #remove leading path
+  filename=${i:${#HTMLMenu}}
+  #remove subdirectory path
+  filename=${filename:$exlen}
+  #remove file extension
+  filename=${filename:0:$((${#filename}-4))}
+
+ echo "include($"$filename");" >> $output
+done
+
+echo "?>" >> $output
+
+mv $output "$HTMLMenu/$1/list.php"
+
+} #end generateCheckBoxes

@@ -1,0 +1,514 @@
+:
+#, rdiff, rll, rupdate, rem
+#, Clair Barrus
+#, v 2.2
+#,
+#, A collection of utilities to help keep a group of machines in sync.  
+#,
+#, Good for groups that are dev/test/prod, or a Farm.  Assumes the same 
+#, directory structure exist across systems.  Use variable "SERVERS" to 
+#, define boxes to operate on. 
+#,
+#, rdiff - diff args between local and remote machines.  Each remote machine 
+#,   is diffed against the local system. <arg> is a list of files.
+#,
+#, rll:  ls -l arg on $SERVERS. Arg is a list of files/directories. 
+#, No arg assumes pwd.
+#,
+#, rupdate - copy local args to remote machines into same pwd. Arg is a list 
+#, of files/directories.  if "-source" is specified, use that system to 
+#, get the source files from.  Note that if both the target and source 
+#, require a password entry (i.e. not trusted) this option will not work
+#,
+#, rem - execute args on $SERVERS in the same pwd as local. Args is a 
+#, command & parameters.  Tip, to avoid issues with Unix special characters 
+#, being interpreted on the local machine when desired to be interpreted 
+#, remotely, surround args in single & double quotes.  Example:
+#,
+#,    rem '"crontab -l | grep abc > /tmp/ct.out"'
+#,
+#, Here, the pipe and redirection all occur on the remote systems.  Without 
+#, single and double quotes, the pipe and redirection occur on the local system.
+#,
+#, Use -setup to have this program to verify and/or correctly set up 
+#, links to rdiff, rll, rupdate, rem.  Note that each of the programs 
+#, is really a single file with multiple links to each of these names.
+#,
+#, Options are:
+#, '-s server' to specify a remote machine other than those defined by 
+#,   SERVERS.  Can be used multiple times to specify multiple serers, 
+#,   or '-servers "host1 host2 ..."'
+#, '-u user' to specify an alternative remote user
+#, '-d directory' to specify an alternative remote directory (other than
+#,    local pwd).  Alternatively you can set variable $REMOTE_DIR 
+#, '-h' to get help message
+#, '-list' list what SERVERS is after parameters are processed
+#, 
+#, If a .rem-config file exists in the same directory as this command (or 
+#, /usr/local/etc or /usr/local/bin) it will be run before options are parsed. 
+#,
+#, Example .rem-config file which sets up default servers, which can be overriden by setting SERVERS. 
+#,
+#,    if [ ! "$SERVERS" ]
+#,    then
+#,      export SERVERS='martin ovation gibson'
+#,    fi
+
+
+### begin variable setup ###
+
+# REMSH is a remsh like program such as ssh.  Trust between accounts
+# makes it easier.
+
+REMSH=ssh
+
+# If the motd or issue gets in your face, two options exist to remove it,
+#  in FILTER or FILTER2.  
+
+# Set FILTER for a simple method to remove the diagnostic output. Note,
+# however, diagnostic (stderr) output may be lost (messages such as 
+# 'file not found').
+
+# FILTER=": 2> /dev/null \; "
+
+# Or use this filter to fgrep -v out the motd and other output.  You may 
+# need to tweak the text to match the remote system's text.  Beware that 
+# occasionally relavent text could be grepped out.  Make sure to un/comment 
+# all the lines
+
+FILTER2=' 2>&1 | fgrep -v "Warning:              
+Use of this system
+is restricted to authorized
+users and is monitored.
+This computer system is a private
+system for the use of authorized users
+Unauthorized or improper use of
+this system is prohibited and may
+administrative disciplinary action
+and civil and criminal penalties.
+Users have no explicit or
+implicit right of privacy
+This system is monitored
+for unauthorized access and use
+By continuing to use this system
+your awareness of and consent to
+terms and conditions of use.
+not a tty"'
+
+# check for config file and source it to override default variables
+if [ -f `dirname $0`/.rem-config ]
+then
+  . `dirname $0`/.rem-config
+elif [ -f /usr/local/etc/.rem-config ]
+then
+  . /usr/local/bin/.rem-config
+elif [ -f /usr/local/bin/.rem-config ]
+then
+  . /usr/local/bin/.rem-config
+fi
+
+system=`uname -s`
+TAROPT=" -P "
+
+# if CPIO is set, it will use CPIO for rupdate.  Default is to use tar
+# CPIO=y
+
+### end of variable setup ###
+
+
+name=`basename $0`
+
+localdir=`pwd`
+if [ "$REMOTE_DIR" ]
+then
+  # allow an environmental variable to set remote directory
+  remdir=$REMOTE_DIR
+else
+  # by default, the remote directory is the same as local directory
+  remdir=$localdir
+fi
+
+
+#### Parse any options to override:
+
+# SERVERS (-s, -server, -servers) 
+# REMUSER (-u, -user, -remuser) 
+# REMOTE_DIR - remote directory (-d, -dir).  Default is local pwd.
+# -l or -local specifies to execute specified command on local machine 
+#   in addition to on SERVERS
+# -h or -help, display help message - comments above ("#,")
+
+dash=`echo $1|cut -c1`
+dash="x$dash"
+while [ "$dash" = x- ]
+do
+  opt=`echo $1|cut -c2-`
+  if [ "$opt" = s -o "$opt" = servers -o "$opt" = server ]
+  then
+    S=" $S $2 "
+    shift
+  elif [ "$opt" = h -o "$opt" = help -o "$opt" = ? ]
+  then
+    sed -n 's/^#, *//p' $0
+    exit
+  elif [ "$opt" = setup ]
+  then
+    setup=y
+  elif [ "$opt" = l -o "$opt" = local ]
+  then
+    local=y
+  elif [ "$opt" = r -o "$opt" = remsh -o "$opt" = shell ]
+  then
+    REMSH=$2
+    shift
+  elif [ "$opt" = list ]
+  then
+    LIST=y
+    shift
+  elif [ "$opt" = source ]
+  then
+    SOURCE=$2
+    shift
+  elif [ "$opt" = u -o "$opt" = user -o "$opt" = remuser ]
+  then
+    REMUSER=" -l $2 "
+    shift
+  elif [ "$opt" = d -o "$opt" = dir ]
+  then
+    remdir="$2"
+    shift
+  else
+    echo "Error: $name: Illegal options $*." 1>&2
+    if [ "$name" = rupdate ]
+    then
+      echo "USAGE: $name [-s <server> [-s <server>]] [-u <remote_user>] [-d <remote_directory>] [-source system] [-h] [-list] [-shell remshell]" 1>&2
+      echo "$name -setup" 1>&2
+    else
+      echo "USAGE: $name [-s <server> [-s <server>]] [-u <remote_user>] [-d <remote_directory>] [-list] [-h] [-shell remshell]" 1>&2
+      echo "$name -setup" 1>&2
+fi
+    exit 1
+  fi
+
+  shift 
+  dash=`echo $1|cut -c1`
+  dash="x$dash"
+done
+
+if [ "$setup" = y ]
+then
+
+  file=`type $0 | sed 's/.* //'`
+  dir=`dirname $file`
+  
+  #### check to make sure the links are set up 
+  inode=`ls -il $file | awk '{print $1}'`
+  
+  ll=`ls -tli $dir | grep -v total | egrep "rdiff|rll|rupdate|rem" | awk '{print $1" "$NF}'`
+  
+  if [ `echo "$ll" | grep -c "$inode" ` -ne 4 ]
+  then
+    # all links are not set up correctly, set them up here
+  
+    cd $dir
+    echo setting up links ... 1>&2
+    for i in rdiff rll rupdate rem
+    do
+      if [ "$i" != "$name" ]
+      then
+        if [ ! -f "$i" ]
+        then
+          echo ln $name $i 1>&2
+          ln $name $i
+        else
+          rm $i
+  	ln $name $i
+        fi
+      fi
+    done
+  else
+    echo Links already setup correctly 1>&2
+  fi
+  exit 0
+fi
+
+
+LMACH="`uname -n`"
+LMACH=${LMACH%%.*}
+
+if [ "$S" ]
+then
+  SERVERS="$S"
+  # if SERVERS was overridden, and LMACH is in the new list, make sure 
+  # local is set to force commands to be executed locally too
+  echo "$S" | grep "$LMACH" > /dev/null
+fi
+
+# remove local machine from list of servers, plus put a single space 
+# between each server
+echo "$SERVERS" | egrep "^$LMACH | $LMACH | $LMACH\$|^$LMACH\$" > /dev/null
+if [ $? -eq 0 ]
+then
+  SERVERS=`echo $SERVERS | sed "s/$LMACH *//"`
+  local=y
+fi
+
+if [ ! "$SERVERS" ]
+then
+  echo "ERROR: No servers specified, variable SERVERS is undefined, nothing to operate on" 1>&2
+  exit 1
+fi
+
+if [ "$LIST" ]
+then
+  echo "servers are $SERVERS
+local machine is $LMACH
+source is $SOURCE" 1>&2
+
+  exit 0
+fi
+
+
+##### Now on to the actual work #####
+
+### rem ###
+
+if [ "$name" = rem ]
+then
+  if [ $# -eq 0 ]
+  then
+    for RMACH in $SERVERS
+    do
+      # if no parameters, then log into each box, one at a time
+      echo ":$RMACH:" 
+      eval "$REMSH $RMACH $REMUSER "
+    done
+    if [ "$local" ]
+    then
+      echo ":back on $LMACH - and end of REM command:" 
+    else
+      echo "
+end of REM:
+" 
+    fi
+
+  else
+    for RMACH in $SERVERS
+    do
+      echo ":$RMACH:" 
+      eval "$REMSH $RMACH $REMUSER $FILTER cd $remdir\\; $* $FILTER2"
+    done
+    # run it on LMACH too if specified
+    if [ "$local" ]
+    then
+      echo ":$LMACH:" 
+      a=`eval echo $*`
+      eval $a
+    fi
+  fi
+
+### rupdate ###
+elif [ "$name" = rupdate ]
+then
+  if [ "$#" -eq 0 ]
+  then
+    echo ERROR: $name: No arguments, aborting 1>&2
+    exit 1
+  fi
+
+  if [ "$SOURCE" = '' -a "$local" ]
+  then
+    export RMACH
+    for RMACH in $SERVERS
+    do
+      echo "$LMACH --> $RMACH / $*"
+ 
+      if [ "$SOURCE" ]
+      then
+        :
+      else
+        if [ "$CPIO" ]
+        then
+	  eval "$REMSH $SOURCE $REMUSER $FILTER cd $remdir \\; find $* -print \\|  cpio -ocvB 2>/dev/null" | eval "$REMSH $RMACH $REMUSER $FILTER cd $remdir \\; cpio -icvBdum $FILTER2"
+        else
+          tar $TAROPT -cf - $* | eval "$REMSH $RMACH $REMUSER $FILTER cd $remdir \\; tar $TAROPT -xvf - $FILTER2"
+        fi
+      fi
+  
+    done
+  elif [ ! "$SOURCE" ]
+    then
+      echo "ERROR: $name, no source nor local system specified.  Use -source or list the local server in $SERVERS"
+      exit 1
+  else
+    # skip source as a target
+    for RMACH in `echo $SERVERS | sed "
+      s/^$SOURCE //
+      s/ $SOURCE //
+      s/$SOURCE$//
+      "`
+    do
+      if [ "$CPIO" ]
+      then
+	 # untested
+         eval "$REMSH $SOURCE $REMUSER $FILTER cd $remdir \\; find $* -print \\|  cpio -ocvB 2>/dev/null" | eval "$REMSH $RMACH $REMUSER $FILTER cd $remdir \\; cpio -icvBdum $FILTER2"
+      else
+        eval "$REMSH $SOURCE $REMUSER $FILTER cd $remdir \\; tar $TAROPT -cf - $* $FILTER" | eval "$REMSH $RMACH $REMUSER $FILTER cd $remdir \\; tar $TAROPT -xvf - $FILTER2"
+# source specified and local specified -- pull from source, copy to local
+      fi
+    done
+    if [ "$local" ]
+    then
+      eval "$REMSH $SOURCE $REMUSER $FILTER cd $remdir \\; tar $TAROPT -cf - $*" $FILTER |  tar $TAROPT -xvf - `eval $FILTER2`
+    fi
+  fi
+
+### rdiff ###
+
+elif [ "$name" = rdiff ]
+then
+  # diff between local and remote
+  
+  if [ $# -eq 0 ]
+  then
+    echo "Error: $name: Parameter(s) needed"
+    exit 1
+  fi
+  
+# figure out how many characters to display of each system name
+  c=`echo $SERVERS | tr ' ' '\012' | sort | uniq | wc -w`
+  for i in 3 4 5 6 7 8 9
+  do
+    c1=`for j in $SERVERS 
+    do
+      echo $j | cut -c1-$i
+    done | sort | uniq | wc -w`
+    if [ "$c" -eq "$c1" ]
+    then
+      break
+    fi
+  done
+  cut=$i
+  l=`echo $LMACH | cut -c1-$cut`
+
+  if [ "$local" = '' -a "$SOURCE" != '' ]
+  then
+    l=`echo $SOURCE | cut -c1-$cut`
+    loc="$SOURCE"
+    SERVERS=`echo $SERVERS | sed -e "s/^$loc //" -e "s/ $loc //" -e "s/ $loc\$//"`
+    for i in $*
+    do
+      # do we have a absolute path?
+      j=`echo $i|cut -c1`
+      if [ "$j" = / ]
+      then
+        LPWD=$i
+      else
+        LPWD=$localdir/$i
+      fi
+      mkdir -p `dirname /tmp/rdiff$$/$LPWD`
+      $REMSH $loc $REMUSER $FILTER cat $LPWD > /tmp/rdiff$$/$i
+    done
+  elif [ "$local" = '' -a "$SOURCE" = '' ]
+  then
+    echo ERROR: must specify either the local system or a source
+    exit 1
+  fi
+  for RMACH in $SERVERS
+  do
+    r=`echo $RMACH | cut -c1-$cut`
+    
+    echo 
+    echo :$RMACH: 
+    
+    for i in $*
+    do
+      # do we have a absolute path?
+      j=`echo $i|cut -c1`
+      if [ "$j" = / ]
+      then
+        LPWD=$i
+        RPWD=$i
+      else
+        LPWD=$localdir/$i
+        RPWD=$remdir/$i
+      fi
+	if [ ! "$local" ]
+	then
+	  LPWD=/tmp/rdiff$$/$i
+	fi
+      if [ $# -gt 1 ]
+      then
+        cat $LPWD |  eval "$REMSH $RMACH $REMUSER $FILTER diff -b - $RPWD $FILTER2" | sed -e "s/^</$l</" -e "s/^>/$r>/" > /tmp/rdiff.tmp
+        if [ -s /tmp/rdiff.tmp ]
+        then
+          echo $i:
+          cat /tmp/rdiff.tmp
+        fi
+      else
+        cat $LPWD | eval "$REMSH $RMACH $REMUSER $FILTER diff -b - $RPWD $FILTER2" | sed -e "s/^</$l</" -e "s/^>/$r>/" 
+      fi
+    done
+
+  done
+  rm -rf /tmp/rdiff$$
+  
+### rll ###
+
+elif [ "$name" = rll ]
+then
+  # ls -l multiple machines
+  
+# figure out how many characters to display of each system name
+  c=`echo $SERVERS | tr ' ' '\012' | sort | uniq | wc -w`
+  for i in 3 4 5 6 7 8 9
+  do
+    c1=`for j in $SERVERS 
+    do
+      echo $j | cut -c1-$i
+    done | sort | uniq | wc -w`
+    if [ "$c" -eq "$c1" ]
+    then
+      break
+    fi
+  done
+  cut=$i
+  if [ "$local" ]
+  then
+    l=`echo $LMACH | cut -c1-$cut`
+  fi
+  if [ $# -eq 0 ]
+  then
+    for RMACH in $SERVERS
+    do
+      r=`echo $RMACH | cut -c1-$cut`
+      eval "$REMSH $RMACH $REMUSER $FILTER cd $remdir \\&\\& ls -ld \* $FILTER2" | 
+      sed -e '/^ *$/d' -e "s/^/$r>/"
+    done
+    if [ "$local" ]
+    then
+      ls -ld * 2>&1 | sed -e '/^$/d' -e "s/^/$l>/"
+    fi
+  
+  else
+    for RMACH in $SERVERS
+    do
+      r=`echo $RMACH | cut -c1-$cut`
+      eval "$REMSH $RMACH $REMUSER $FILTER cd $remdir \\&\\& ls -ld $* $FILTER2" | 
+      sed  -e '/^ *$/d' -e "s/^/$r>/"
+    done
+    if [ "$local" ]
+    then
+      ls -ld $* 2>&1 | sed -e '/^$/d' -e "s/^/$l>/"
+    fi
+  fi | tr -s ' ' | sort -t' ' -k 9,9 -k 1,1 | while read a
+  do
+    printf "%-12s %3s %6s %6s %15s %3s %2s %5s %s\n" $a 
+  done
+
+
+else 
+  echo "ERROR: $name: Not sure what to do with $name"
+  exit 1
+fi
+ 
