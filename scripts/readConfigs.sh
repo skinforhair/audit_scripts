@@ -8,9 +8,19 @@ TYPE=
 OUTPUT=
 counter=0
 
+displayAlert() {
+ echo ""
+ echo "-------------"
+ echo "$1"
+ echo "-------------"
+ echo ""
+} #end displayAlert
+
+
 # Read the file in parameter and fill the array named "array"
 getArray() {
     i=0
+    unset CONF
     while read line # Read a line
     do
         CONF[i]=$line # Put it into the array
@@ -54,6 +64,7 @@ do
 			#if not a node, then it is a group
 			if [ "$firstChar" != "-" ]; then
 				curGroup=$i
+#displayAlert "$ENV $curGroup $TYPE"
 				GroupArray[$counter]=$ENV$curGroup
 				counter=$((counter+1))
 				if [ "$counter" != "1" ]; then
@@ -105,13 +116,14 @@ fi
 echo "#!/bin/bash" >> $so
 echo "source $SCRIPTS/common/vars" >> $so
 echo "source $SCRIPTS/common/functions" >> $so
-echo "source $SCRIPTS/common/config_variables/"$TYPE"_arrays" >> $so
+echo "source $SCRIPTS/config_variables/"$TYPE"_arrays" >> $so
+echo "source $SCRIPTS/common/"${TYPE,,}".functions" >> $so
 echo "" >> $so
 echo "cleanGenPath "$ltype >> $so
 echo "OUTPUT=$""TEMPDIR/output_from_"$ltype"_audit" >> $so
 echo "CSV_FILE=$""TEMPDIR/"$ltype"_audit_output.csv" >> $so
-echo "OUTPUT_PHP=$""HTMLDIR/$ltype/"$ltype"_" >> $so
-echo "DISPLAY_PHP=$""HTMLDIR/"$ltype"_audit.php" >> $so
+echo "OUTPUT_PHP=$""DATADir/$ltype/"$ltype"_" >> $so
+echo "DISPLAY_PHP=$""DATADir/"$ltype"_audit.php" >> $so
 echo "" >> $so
 
 echo "for GROUP in $""{"$TYPE"FarmArray[@]}" >> $so
@@ -146,7 +158,7 @@ function readConf() {
 if [ "$1" != "" ]; then
   getArray $1
   createArrays
-  mv $OUTPUT $SCRIPTS/common/config_variables
+  mv $OUTPUT $SCRIPTS/config_variables
   createScript
 else
   echo "Please specify a config file!"

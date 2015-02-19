@@ -1,6 +1,7 @@
 <html>
  <head>
   <title>Audit Home</title>
+  <meta http-equiv="refresh" content="40">
  </head>
  <body>
 
@@ -10,7 +11,7 @@
   <br>
 
 <?php
-   foreach (glob("generated_menu/*") as $pathName)
+   foreach (glob("menu/*") as $pathName)
    {
 	if (is_dir($pathName))
 	{ 

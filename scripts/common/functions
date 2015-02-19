@@ -1,0 +1,164 @@
+#!/bin/bash
+
+function displayAlert() {
+ echo ""
+ echo "-------------"
+ echo "$1"
+ echo "-------------"
+ echo ""
+} #end displayAlert
+
+function maintenance_page() {
+	if [ "${1,,}" = "start" ]; then
+		mv "$HTMLDIR/index.php" "$HTMLDIR/css/bindex.php"
+		cp "$HTMLDIR/css/maintenance.php" "$HTMLDIR"
+		mv "$HTMLDIR/maintenance.php" "$HTMLDIR/index.php"
+	fi #start
+
+	if [ "${1,,}" = "stop" ]; then
+		if [ -a "$HTMLDIR/css/bindex.php" ]; then
+		 rm "$HTMLDIR/index.php"
+		 mv "$HTMLDIR/css/bindex.php" "$HTMLDIR/index.php"
+		fi
+	fi #stop
+} #end maintenance_page
+
+function cleanStrings() {
+  myFile=$TEMPDIR/strings_to_clean
+
+  #Remmove Unwanted Lines
+  sed  "/:'/d" $1 > $myFile
+  sed -i '/No such file or directory/d' $myFile
+  sed -i '/#IPADDR/d' $myFile
+
+  #Remove Blank lines
+  sed -i '/^$/d' $myFile
+
+  #Remove unwanted tabs
+  sed -i 's/[\t]//g' $myFile
+
+  #Remove More unwanted strings
+  sed -i 's/model name:        //g' $myFile
+  sed -i 's/model name: //g' $myFile
+  sed -i 's/MemTotal:      //g' $myFile
+  sed -i 's/SwapTotal:     //g' $myFile
+  sed -i 's/64, compiled/64- compiled/g' $myFile
+  sed -i 's/"//g' $myFile
+  sed -i 's/IPADDR=//g' $myFile
+  sed -i 's/<//g' $myFile
+  sed -i 's/>//g' $myFile
+  sed -i 's|Server version: Apache/||g' $myFile
+  sed -i 's/Server built:   //g' $myFile
+  sed -i 's/component name="WebLogic Server" version="//g' $myFile
+  sed -i 's|" InstallDir="/opt/weblogic/wlserver_10.3"||g' $myFile
+  sed -i 's/java version//g' $myFile
+
+  sed -i 's/JVM Version:    //g' $myFile
+  sed -i 's/JVM Vendor:     //g' $myFile
+  sed -i 's/Server number:  //g' $myFile
+  sed -i 's/Oracle Corporation,/Oracle Corporation/g' $myFile
+
+  #Change Carriage Returns to Commas
+  sed -e :a -e '$!N;s/\n/,/;ta' $myFile > $2
+
+  #Remove Double Commas
+  sed -i 's/,,//g' $2
+
+  #Remove Comma from beginning and end of line
+  sed -i 's/^,\(.*\),$/\1/' $2
+
+  #cleanup files
+  rm $myFile
+
+}
+
+function createPHPMenu() {
+
+ myType=`echo "$1" | awk -F"/" '{print $NF}'`
+ myType=${myType:0:$((${#myType}-1))}
+ myDir=$HTMLMenu/$myType
+ if [ -d "$myDir" ]; then
+	 echo "<input type=\"checkbox\" name=\"$myType$2\" value=\"$1$2.php\" />$2<br />" > $myDir/$2.php
+ else
+	 mkdir $myDir
+	 echo "<input type=\"checkbox\" name=\"$myType$2\" value=\"$1$2.php\" />$2<br />" > $myDir/$2.php
+ fi
+
+# $OUTPUT_PHP $ENVIRONMENT
+} #end createPHPMenu
+
+function cleanup_files() {
+	args=("$@")
+
+	for i in ${args[@]}; do
+		if [ -a $i ]; then
+			rm $i
+		fi
+	done
+} #end cleanup_files
+
+
+function cleanGenPath() {
+ path="$HTMLMenu/$1"
+ if [ -d "$path" ]; then
+    foundTemp=`find $path -name *.php`
+     if [ "$foundTemp" != "" ]; then
+	rm $path/*.php
+     fi
+ else
+    mkdir $path
+ fi
+
+ path="$DATADir/$1"
+ if [ -d "$path" ]; then
+    foundTemp=`find $path -name *.php`
+     if [ "$foundTemp" != "" ]; then
+        rm $path/*.php
+     fi
+ else
+    mkdir $path
+ fi
+} #end cleanGenPath
+
+function generateCheckBoxes() {
+	path="$HTMLMenu/$1/*"
+	output=$HTMLMenu/$1_"list.php"
+	exlen=${#1}
+	#account for before and after slashes
+	exlen=$((exlen+2))
+
+	if [ -a $output ]; then
+	 rm $output
+	fi
+	echo "<?php" >> $output
+
+for i in $path; do
+  #remove leading path
+  filename=${i:${#HTMLMenu}}
+  #remove subdirectory path
+  filename=${filename:$exlen}
+  #remove file extension
+  filename=${filename:0:$((${#filename}-4))}
+  if [ "$filename" != "list" ]; then
+	 echo "$"$1$filename" = $""_POST[\""$1$filename"\"];" >> $output
+  fi
+done
+
+for i in $path; do
+  #remove leading path
+  filename=${i:${#HTMLMenu}}
+  #remove subdirectory path
+  filename=${filename:$exlen}
+  #remove file extension
+  filename=${filename:0:$((${#filename}-4))}
+  if [ "$filename" != "list" ]; then
+	 echo "include($"$1$filename");" >> $output
+  fi
+done
+
+echo "?>" >> $output
+
+mv $output "$HTMLMenu/$1/list.php"
+
+} #end generateCheckBoxes
+

@@ -1,0 +1,124 @@
+#!/bin/bash
+
+function audit_weblogic() {
+ $SCRIPTS/common/rem -s \'$1\' '"
+  ##### NODE NAME ################
+  uname -n;
+
+  ##### IP ADDRESS #####
+  cat /etc/sysconfig/network-scripts/ifcfg-eth0 | grep IPADDR
+
+  ##### TIME OF REPORT ############
+  date;
+
+  ##### OS RELEASE INFORMATION ####
+  cat /etc/redhat-release;
+
+  ##### KERNEL INFORMATION ########
+  uname -r;
+
+  ##### MACHINE INFORMATION #######
+  uname -isv;
+
+  ##### PROCESSOR INFORMATION #####
+  cat /proc/cpuinfo | grep processor | wc -l;
+  cat /proc/cpuinfo | grep name | sort -u;
+
+  ##### MEMORY INFORMATION ########
+  cat /proc/meminfo | grep MemTotal;
+  cat /proc/meminfo | grep SwapTotal;
+
+  ##### WEBLOGIC INFORMATION ########
+  cat /opt/weblogic/registry.xml | grep Server | grep version;
+  /opt/jdk/jrrt/bin/java -version;
+
+  ##### PLACE HOLDER FOR A LINE BREAK ##############
+  echo BREAKME;
+ "' >> $OUTPUT
+} #audit_weblogic
+
+function format_weblogic() {
+OUTPUT2=$TEMPDIR/output_weblogic_csv_2
+
+  #Remmove Unwanted Lines
+  cleanStrings $OUTPUT $OUTPUT2
+
+
+  #Add Column Headings
+  LINE1='NODE NAME,IP ADDRESS,REPORT DATE,OS VERSION,KERNEL,MACHINE INFORMATION,NUMBER OF CPUS,CPU MODEL,MEM TOTAL,SWAP TOTAL,WEBLOGIC VERSION,JAVA VERSION,JVM INFORMATION,JVM TYPE'
+printf '%s\n' H 1i "$LINE1" . wq | ed -s $OUTPUT2
+
+  #output to CSV
+  mv $OUTPUT2 $CSV_FILE
+
+} ##format_weblogic
+
+
+
+function weblogic_csv_to_php() {
+        INPUT_CSV="$1"
+        ENVIRONMENT="$2"
+
+  if [ "$ENVIRONMENT" == "" ]; then
+        ENVIRONMENT="Dev"
+  fi
+        cp $INPUT_CSV $OUTPUT_PHP$ENVIRONMENT.php
+#########################################
+##### CREATE HTML TABLE HEADING ROW #####
+#########################################
+
+sed -i 's|NODE NAME,|<tr><th class="second">NODE NAME</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|IP ADDRESS,|\n<th class="second">IP ADDRESS</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|REPORT DATE,|\n<th class="second">REPORT DATE</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|OS VERSION,|\n<th class="second">OS VERSION</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|MACHINE INFORMATION,|\n<th class="second">MACHINE INFORMATION</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|KERNEL,|\n<th class="second">KERNEL</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|NUMBER OF CPUS,|\n<th class="second">NUMBER OF CPUS</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|CPU MODEL,|\n<th class="second">CPU MODEL</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|MEM TOTAL,|\n<th class="second">MEM TOTAL</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|SWAP TOTAL,|\n<th class="second">SWAP TOTAL</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|WEBLOGIC VERSION,|\n<th class="second">WEBLOGIC VERSION</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|JAVA VERSION,|\n<th class="second">JAVA VERSION</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|JVM INFORMATION,|\n<th class="second">JVM INFORMATION</th>|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|JVM TYPE|\n<th class="second">JVM TYPE</th></tr>|g' $OUTPUT_PHP$ENVIRONMENT.php
+
+
+############################################
+##### ADD ALL <tr><td> TAGS FOR TABLE ######
+############################################
+
+for i in ${FullWeblogicFarmArray[@]}
+do
+#  echo "---- working on $i -----"
+  sed -i "s/\b$i/\n<tr><td class='main'>$i/g" $OUTPUT_PHP$ENVIRONMENT.php
+done
+
+sed -i 's|,BREAKME,|</td></tr>\n|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|,BREAKME|</td></tr>\n|g' $OUTPUT_PHP$ENVIRONMENT.php
+sed -i 's|,|</td><td class="main">|g' $OUTPUT_PHP$ENVIRONMENT.php
+
+
+###############################################################
+##### CREATE VARIABLES CONTAINING TABLE START INFORMATION #####
+###############################################################
+
+TABLE1='<br><table class="t_main" border="1">'
+COLSPAN1='<tr><th class="main" colspan="14">WEBLOGIC '$ENVIRONMENT' Server Information</th></tr>'
+
+printf '%s\n' H 1i "$TABLE1" . wq | ed -s $OUTPUT_PHP$ENVIRONMENT.php
+printf '%s\n' H 2i "$COLSPAN1" . wq | ed -s $OUTPUT_PHP$ENVIRONMENT.php
+
+################################
+##### CLOSE THE TABLE HTML #####
+################################
+
+echo '</table>' >> $OUTPUT_PHP$ENVIRONMENT.php
+
+###############################
+#### Write a php file for menus
+###############################
+ createPHPMenu $OUTPUT_PHP $ENVIRONMENT
+
+} #end weblogic_csv_to_php
+
+
