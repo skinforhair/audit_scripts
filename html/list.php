@@ -1,4 +1,6 @@
 <link rel="stylesheet" type="text/css" href="css/audit_style.css">
+
+<a href="index.php">Go Back</a>
 <?php
  $myname="";
    foreach (glob("menu/*") as $pathName)
