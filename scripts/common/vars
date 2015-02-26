@@ -1,6 +1,6 @@
 #!/bin/bash
 #change root_path based on where scripts are located
-ROOT_PATH=/home/jeremiahj/audit
+ROOT_PATH=/var/www/html/audit
 
 
 SCRIPTS=$ROOT_PATH/scripts
@@ -10,4 +10,7 @@ CONFDIR=$ROOT_PATH/conf
 GeneratedScripts=$SCRIPTS/generated_scripts
 HTMLMenu=$HTMLDIR/menu
 DATADir=$HTMLDIR/data
+
+DefaultUser="jeremiahj"
+DefaultGroup="cwsrepo"
 

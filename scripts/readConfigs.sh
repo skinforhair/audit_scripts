@@ -149,6 +149,7 @@ echo "" >> $so
 echo "        format_$ltype" >> $so
 echo "        "$ltype"_csv_to_php $""CSV_FILE $""GROUP" >> $so
 echo "        generateCheckBoxes "$ltype >> $so
+echo " fixPerms" >> $so
 echo "done" >> $so
 
 chmod 755 $so

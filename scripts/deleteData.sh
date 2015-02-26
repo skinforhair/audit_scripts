@@ -17,3 +17,4 @@ removeFiles $TEMPDIR
 removeFiles $GeneratedScripts
 removeFiles $HTMLMenu
 removeFiles $DATADir
+removeFiles $SCRIPTS/config_variables

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function audit_tomcat() {
- $SCRIPTS/common/rem -s \'$1\' '"
+ $SCRIPTS/common/rem -s \'$1\' -u cwsrepo '"
   ##### NODE NAME ################
   uname -n;
 

@@ -31,6 +31,12 @@ function cleanStrings() {
   sed -i '/No such file or directory/d' $myFile
   sed -i '/#IPADDR/d' $myFile
 
+  #custom motd for qms
+  sed -i '/CERTIFIED SERVER INSTALLATION/d' $myFile
+  sed -i '/Only update approved packages and/d' $myFile
+  sed -i '/Log all changes to http/d' $myFile
+  sed -i '/------------------------------------------------------------------/d' $myFile
+
   #Remove Blank lines
   sed -i '/^$/d' $myFile
 
@@ -162,3 +168,9 @@ mv $output "$HTMLMenu/$1/list.php"
 
 } #end generateCheckBoxes
 
+function fixPerms() {
+ chown -R $DefaultUser.$DefaultGroup $HTMLMenu
+ chown -R $DefaultUser.$DefaultGroup $DATADir
+ chmod -R 775 $DATADir
+ chmod -R 755 $HTMLMenu
+}
