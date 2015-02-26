@@ -4,6 +4,13 @@ html *
                 font-family: Courier New;
         }
 
+body
+	{
+	  background-image: url("Server-Audit.jpg");
+	  background-size: 700px;
+	  background-repeat: no-repeat;
+	  background-position: top center;
+	}
 table.t_main
         {
                 border:solid #999;
@@ -83,11 +90,122 @@ td.tableHead
             border: 1px solid Black;
           }
 
-h1 {
-    border-bottom: 8px solid #57c4d0;
-    position: absolute; 
+td.checkboxes
+	{
+          font-family:"helvetica";
+	}
+
+h1 
+{
+	font-size: 20px;
+	font-weight: 300;
+    	position: relative;
+}
+h1:before
+{
+	content:"";
+	position: absolute;
+	width:900px;
+	height: 8px;
+	bottom: 0;
+	left: 0;
+	top: 10px;
+	border-bottom: 8px solid #57c4d0;
 }
 
 .title {
     border-bottom: 1px solid #dedede;
 }
+
+.checkbox.custom {
+  float: left;
+  margin: 0;
+  padding: 0;
+  display: block;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+input[type="checkbox"].custom {
+  margin-left: 0;
+  padding:0;
+}
+
+input[type=checkbox].css-checkbox {
+  position:absolute;
+  overflow:hidden;
+  clip:rect(0 0 0 0);
+  height:1px;
+  width:1px;
+  margin:-1px;
+  padding:0px;
+  border:0;
+}
+
+input[type=checkbox].css-checkbox+label.css-label,
+input[type=checkbox].css-checkbox+label.css-label-red,
+input[type=checkbox].css-checkbox+label.css-label-yellow,
+input[type=checkbox].css-checkbox+label.css-label-blue,
+input[type=checkbox].css-checkbox+label.css-label-green,
+input[type=checkbox].css-checkbox+label.css-label-purple{
+  padding-left:25px;
+  padding-right:1px;
+  height:20px;
+  width:100%;
+  display:inline-block;
+  line-height:15px;
+  background-repeat:no-repeat;
+  background-position:0 0;
+  font-size:13px;
+  vertical-align:middle;
+  cursor:pointer;
+  opacity:1;
+  -webkit-transition: all .2s ease-out;
+  -moz-transition: all .2s ease-out;
+  -ms-transition: all .2s ease-out;
+  -o-transition: all .2s ease-out;
+  transition: all .2s ease-out;
+}
+
+input[type=checkbox].css-checkbox+label.css-label:hover,
+input[type=checkbox].css-checkbox+label.css-label-red:hover,
+input[type=checkbox].css-checkbox+label.css-label-yellow:hover,
+input[type=checkbox].css-checkbox+label.css-label-blue:hover,
+input[type=checkbox].css-checkbox+label.css-label-green:hover,
+input[type=checkbox].css-checkbox+label.css-label-purple:hover{
+  opacity:0.5;
+}
+
+input[type=checkbox].css-checkbox:checked+label.css-label,
+input[type=checkbox].css-checkbox:checked+label.css-label-red,
+input[type=checkbox].css-checkbox:checked+label.css-label-yellow,
+input[type=checkbox].css-checkbox:checked+label.css-label-blue,
+input[type=checkbox].css-checkbox:checked+label.css-label-green,
+input[type=checkbox].css-checkbox:checked+label.css-label-purple{
+  background-position:0 -21px;
+}
+
+.css-label {
+  background:url(check-red-small.png);
+}
+
+.css-label-red {
+  background-image:url(check-red-small.png);
+}
+
+.css-label-yellow {
+  background:url(check-yellow-small.png);
+}
+
+.css-label-blue {
+  background:url(check-blue-small.png);
+}
+
+.css-label-purple {
+  background-image:url(check-purple-small.png);
+}
+
+.css-label-green {
+  background-image:url(check-green-small.png);
+}
+

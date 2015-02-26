@@ -83,12 +83,30 @@ function createPHPMenu() {
  myType=`echo "$1" | awk -F"/" '{print $NF}'`
  myType=${myType:0:$((${#myType}-1))}
  myDir=$HTMLMenu/$myType
- if [ -d "$myDir" ]; then
-	 echo "<input type=\"checkbox\" name=\"$myType$2\" value=\"$1$2.php\" />$2<br />" > $myDir/$2.php
- else
+ if [ ! -d "$myDir" ]; then
 	 mkdir $myDir
-	 echo "<input type=\"checkbox\" name=\"$myType$2\" value=\"$1$2.php\" />$2<br />" > $myDir/$2.php
  fi
+ myENV=${2:0:3}
+
+ case "$myENV" in
+	"Dev")
+		checkbox="-green"
+		;;
+	"Tes")
+		checkbox="-yellow"
+		;;
+	"Pro")
+		checkbox="-red"
+		;;
+	*)
+		checkbox=""
+		;;
+ esac
+echo "<div class=\"checkbox custom\">" > $myDir/$2.php
+echo "<input id=\"$myType$2\" name=\"$myType$2\" value=\"$1$2.php\" class=\"css-checkbox\" type=\"checkbox\" />" >> $myDir/$2.php
+echo "<label for=\"$myType$2\" class=\"css-label$checkbox\">$2</label>" >> $myDir/$2.php
+echo "</div>" >> $myDir/$2.php
+#	 echo "<input type=\"checkbox\" name=\"$myType$2\" value=\"$1$2.php\" />$2<br />" > $myDir/$2.php
 
 # $OUTPUT_PHP $ENVIRONMENT
 } #end createPHPMenu

@@ -40,6 +40,7 @@ getOutput() {
 
 
 createArrays() {
+unset GroupArray
 getOutput
 if [ -a $OUTPUT ]; then
 	rm -f $OUTPUT

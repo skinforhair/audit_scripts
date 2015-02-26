@@ -2,21 +2,21 @@
  <head>
   <title>Audit Home</title>
   <meta http-equiv="refresh" content="40">
+  <link rel="stylesheet" type="text/css" href="css/audit_style.css">
  </head>
  <body>
 
 
+<br><br><br>
  <form action="list.php" method="post">
-  Which environments do you want to see?<br />
-  <br>
-
 <?php
    foreach (glob("menu/*") as $pathName)
    {
         if (is_dir($pathName))
         {
-                $title=substr($pathName,15);
+                $title=substr($pathName,5);
                 $title=ucfirst($title);
+		echo "<br>";
                 echo "<h1>".$title."</h1>";
 ?>
  <table border=1>

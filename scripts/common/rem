@@ -117,7 +117,7 @@ TAROPT=" -P "
 
 
 name=`basename $0`
-
+REMOTE_DIR=/
 localdir=`pwd`
 if [ "$REMOTE_DIR" ]
 then
