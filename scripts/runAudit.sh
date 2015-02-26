@@ -2,8 +2,8 @@
 source common/vars
 source common/functions
 
-isEmpty=`find $GeneratedScripts -type f -exec echo {} \;`
-
+isEmpty=`find $GeneratedScripts -name "*.sh" -exec echo {} \;`
+#echo "----- $isEmpty ---- "
 
 if [ "$isEmpty" != "" ]; then
 #	maintenance_page start

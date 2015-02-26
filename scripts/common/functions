@@ -169,8 +169,13 @@ mv $output "$HTMLMenu/$1/list.php"
 } #end generateCheckBoxes
 
 function fixPerms() {
- chown -R $DefaultUser.$DefaultGroup $HTMLMenu
- chown -R $DefaultUser.$DefaultGroup $DATADir
- chmod -R 775 $DATADir
- chmod -R 755 $HTMLMenu
+OriginatingUser="$(whoami)"
+ if [ $OriginatingUser != 'root' ]; then
+  OriginatingUser=`who am i | awk '{print $1}'`
+ else
+  chown -R $DefaultUser.$DefaultGroup $HTMLMenu
+  chown -R $DefaultUser.$DefaultGroup $DATADir
+  chmod -R 775 $DATADir
+  chmod -R 755 $HTMLMenu
+ fi
 }

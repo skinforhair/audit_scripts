@@ -13,4 +13,5 @@ DATADir=$HTMLDIR/data
 
 DefaultUser="jeremiahj"
 DefaultGroup="cwsrepo"
+REMOTEUSER="cwsrepo"
 

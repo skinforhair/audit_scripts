@@ -124,11 +124,14 @@ echo "OUTPUT=$""TEMPDIR/output_from_"$ltype"_audit" >> $so
 echo "CSV_FILE=$""TEMPDIR/"$ltype"_audit_output.csv" >> $so
 echo "OUTPUT_PHP=$""DATADir/$ltype/"$ltype"_" >> $so
 echo "DISPLAY_PHP=$""DATADir/"$ltype"_audit.php" >> $so
+echo "GEN_KEYS=$""1" >> $so
 echo "" >> $so
 
 echo "for GROUP in $""{"$TYPE"FarmArray[@]}" >> $so
 echo "do" >> $so
+echo "		if [ \"$""GEN_KEYS\" != \"connect\" ]; then" >> $so
 echo "                cleanup_files \"$""OUTPUT\" \"$""CSV_FILE"\" >> $so
+echo "		fi" >> $so
 echo "                serverList=" >> $so
 echo "" >> $so
 echo "        case \"$""GROUP\" in" >> $so
@@ -142,14 +145,21 @@ echo "        esac" >> $so
 echo "echo \"working on $""GROUP\"" >> $so
 echo "        for i in $""{serverList[@]}" >> $so
 echo "        do" >> $so
+echo "		if [ \"$""GEN_KEYS\" != \"connect\" ]; then" >> $so
 echo "                echo \"Auditing $""i...\"" >> $so
 echo "                audit_$ltype \"$""i\"" >> $so
+echo "		else" >> $so
+echo "		  echo $""i" >> $so
+echo "		  ssh-copy-id $""REMOTEUSER@$""i" >> $so
+echo "		fi" >> $so
 echo "        done" >> $so
 echo "" >> $so
-echo "        format_$ltype" >> $so
-echo "        "$ltype"_csv_to_php $""CSV_FILE $""GROUP" >> $so
-echo "        generateCheckBoxes "$ltype >> $so
-echo " fixPerms" >> $so
+echo "		if [ \"$""GEN_KEYS\" != \"connect\" ]; then" >> $so
+echo "            format_$ltype" >> $so
+echo "           "$ltype"_csv_to_php $""CSV_FILE $""GROUP" >> $so
+echo "            generateCheckBoxes "$ltype >> $so
+echo "		fi" >> $so
+echo "            fixPerms" >> $so
 echo "done" >> $so
 
 chmod 755 $so
