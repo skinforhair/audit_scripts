@@ -9,7 +9,7 @@ if [ "$isEmpty" != "" ]; then
 #	maintenance_page start
 	for i in $GeneratedScripts/*.sh
 	do 
-		$i
+		$i $1
 	done
 #        maintenance_page stop
 else
