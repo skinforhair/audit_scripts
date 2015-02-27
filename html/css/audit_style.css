@@ -9,8 +9,15 @@ body
 	  background-image: url("Server-Audit.jpg");
 	  background-size: 700px;
 	  background-repeat: no-repeat;
-	  background-position: top center;
+	  background-position: top right;
 	}
+a.big
+         {
+                font-family: arial;
+                font-size: 200%;
+                color:#000000;
+		border-bottom: 2px solid black;
+         }
 table.t_main
         {
                 border:solid #999;
@@ -41,12 +48,55 @@ th.main
                 color:#9ef4fa;
                 background:#0000ff;
         }
+th.Dev_main
+        {
+                font-family: arial;
+                font-size: 200%;
+                color:#000000;
+                background:#25c76a;
+        }
+th.Test_main
+        {
+                font-family: arial;
+                font-size: 200%;
+                color:#000000;
+                background:#ffa50b;
+        }
+th.Prod_main
+        {
+                font-family: arial;
+                font-size: 200%;
+                color:#000000;
+                background:#dd453d;
+        }
+
 th.second
         {
                 font-family: arial;
                 font-size: 90%;
                 color:#9ef4fa;
                 background:#0000ff;
+        }
+th.Dev_second
+        {
+                font-family: arial;
+                font-size: 90%;
+                color:#000000;
+                background:#66f1a1;
+        }
+th.Test_second
+        {
+                font-family: arial;
+                font-size: 90%;
+                color:#000000;
+                background:#ffc35a;
+        }
+th.Prod_second
+        {
+                font-family: arial;
+                font-size: 90%;
+                color:#000000;
+                background:#dc7974;
         }
 th.third
         {
@@ -63,6 +113,31 @@ td.main
                         font-size: 90%;
                 border: 1px solid black;
         }
+td.Dev
+        {
+                text-align:center;
+                background:#d1ffe4;
+                        font-family: Courier New;
+                        font-size: 90%;
+                border: 1px solid black;
+        }
+td.Test
+        {
+                text-align:center;
+                background:#ffc;
+                        font-family: Courier New;
+                        font-size: 90%;
+                border: 1px solid black;
+        }
+td.Prod
+        {
+                text-align:center;
+                background:#dcbdbb;
+                        font-family: Courier New;
+                        font-size: 90%;
+                border: 1px solid black;
+        }
+
 td.menu
         {
                 text-align:center;
@@ -120,10 +195,11 @@ h1:before
 .checkbox.custom {
   float: left;
   margin: 0;
-  padding: 0;
+  padding: 10px;
   display: block;
-  width: 100%;
+/*  width: 100%; */
   margin-bottom: 10px;
+/*  border: 1px solid black; */
 }
 
 input[type="checkbox"].custom {

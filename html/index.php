@@ -8,7 +8,10 @@
 
 
 <br><br><br>
+<br><br><br>
  <form action="list.php" method="post">
+
+                <input type="submit" name="formSubmit" value="Submit" />
 <?php
    foreach (glob("menu/*") as $pathName)
    {

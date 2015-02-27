@@ -1,6 +1,11 @@
 <link rel="stylesheet" type="text/css" href="css/audit_style.css">
 
-<a href="index.php">Go Back</a>
+<br><br><br>
+<br><br><br>
+<br><br><br>
+
+<a href="index.php" class="big">Go Back</a><br>
+
 <?php
  $myname="";
    foreach (glob("menu/*") as $pathName)
@@ -14,4 +19,5 @@
 	}
    }
 ?>
-<a href="index.php">Go Back</a>
+<br>
+<a href="index.php" class="big">Go Back</a>
